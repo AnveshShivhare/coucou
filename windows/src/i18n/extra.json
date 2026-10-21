@@ -5129,6 +5129,32 @@
    "id": "Perbarui Coucou ke {version}…",
    "de": "Coucou auf {version} aktualisieren…",
    "tr": "Coucou'yu {version} sürümüne güncelle…"
+  },
+  "Top offset": {
+   "zh-Hans": "顶部偏移",
+   "hi": "शीर्ष ऑफ़सेट",
+   "es": "Desplazamiento superior",
+   "ar": "الإزاحة من الأعلى",
+   "fr": "Décalage supérieur",
+   "bn": "শীর্ষ অফসেট",
+   "pt-BR": "Deslocamento superior",
+   "ru": "Отступ сверху",
+   "id": "Offset atas",
+   "de": "Oberer Versatz",
+   "tr": "Üst ofset"
+  },
+  "pixels from the top of the screen": {
+   "zh-Hans": "距屏幕顶部的像素数",
+   "hi": "स्क्रीन के शीर्ष से पिक्सेल",
+   "es": "píxeles desde la parte superior de la pantalla",
+   "ar": "بكسل من أعلى الشاشة",
+   "fr": "pixels depuis le haut de l'écran",
+   "bn": "পর্দার উপর থেকে পিক্সেল",
+   "pt-BR": "pixels a partir do topo da tela",
+   "ru": "пикселей от верхнего края экрана",
+   "id": "piksel dari bagian atas layar",
+   "de": "Pixel vom oberen Bildschirmrand",
+   "tr": "ekranın üstünden piksel"
   }
  }
 }

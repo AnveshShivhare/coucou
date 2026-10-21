@@ -149,6 +149,10 @@ export interface Settings {
    */
   language: string;
   /**
+   * Additional Y offset from the top of the display in logical pixels (Linux only).
+   */
+  topOffset?: number;
+  /**
    * The phone link for Coucou for Android is on. Rust owns it (only the switch in
    * Settings → Android phone turns it on): whatever the page sends back is ignored.
    */
@@ -193,6 +197,7 @@ export const DEFAULT_SETTINGS: Settings = {
   mochiOutfit: DEFAULT_OUTFIT,
   pillColors: {},
   language: "",
+  topOffset: 0,
 };
 
 type Listener = () => void;

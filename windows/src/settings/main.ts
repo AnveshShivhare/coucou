@@ -14,7 +14,7 @@ import { DEFAULT_SETTINGS, type Settings } from "../core/state";
 import type { UpdateStatus } from "../core/update";
 import { SOUND_NAMES } from "../core/sound";
 import {
-  MAX_DECLARED, PILL_CATEGORIES, availablePills, chooseMainPill, isComingSoon, mainPillChoices,
+  HOST_OS, MAX_DECLARED, PILL_CATEGORIES, availablePills, chooseMainPill, isComingSoon, mainPillChoices,
   sanitizeDeclared, toggleDeclared, type PillDefinition,
 } from "../core/pills";
 import { h, clear } from "../views/dom";
@@ -929,6 +929,17 @@ function generalSection(): HTMLElement {
     void save();
   });
 
+  const topOffset = h("input", {
+    type: "number", min: "0", max: "200", step: "1",
+    value: String(Math.round(settings.topOffset ?? 0)),
+    style: "width:72px",
+  }) as HTMLInputElement;
+  topOffset.addEventListener("change", () => {
+    settings.topOffset = Math.max(0, Math.min(200, Number(topOffset.value) || 0));
+    topOffset.value = String(settings.topOffset);
+    void save();
+  });
+
   const screen = h("select", {}) as HTMLSelectElement;
   screen.append(
     h("option", { value: "primary", text: t("Main display") }),
@@ -985,6 +996,13 @@ function generalSection(): HTMLElement {
       h("label", { text: t("Island lives on") }),
       screen,
     ),
+    ...(HOST_OS === "linux" ? [
+      h("div", { class: "row" },
+        h("label", { text: t("Top offset") }),
+        topOffset,
+        h("span", { class: "hint", text: t("pixels from the top of the screen") }),
+      ),
+    ] : []),
     h("div", { class: "row" },
       h("label", { text: t("Launch at startup") }),
       toggle(settings.autostart, (v) => { settings.autostart = v; void save(); }),

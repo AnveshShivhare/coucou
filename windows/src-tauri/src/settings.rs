@@ -99,6 +99,8 @@ pub struct Settings {
     pub phone_relay_url: String,
     /// The date and time in the middle of the compact island. Off by default.
     pub show_clock: bool,
+    /// Additional Y offset from the top of the display in logical pixels (Linux only).
+    pub top_offset: i32,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -165,6 +167,9 @@ impl Default for Settings {
             phone_relay: false,
             phone_relay_url: String::new(),
             show_clock: false,
+            top_offset: crate::platform::default_top_offset(
+                &std::env::var("XDG_CURRENT_DESKTOP").unwrap_or_default(),
+            ),
         }
     }
 }
@@ -223,7 +228,9 @@ fn parse(bytes: &[u8]) -> Option<Settings> {
         return None;
     };
     let whole = serde_json::from_value(Value::Object(fields.clone()));
-    Some(whole.unwrap_or_else(|_| salvage(fields)))
+    let mut settings = whole.unwrap_or_else(|_| salvage(fields));
+    settings.top_offset = settings.top_offset.clamp(0, 200);
+    Some(settings)
 }
 
 /// Settings from the fields of a settings.json that does not load as a whole.
@@ -388,7 +395,9 @@ fn write_whole(file: &mut std::fs::File, bytes: &[u8]) -> std::io::Result<()> {
 /// `save`, for the file at `path`, whose directory already exists.
 fn save_to(path: &Path, settings: &Settings) -> std::io::Result<()> {
     keep_what_was_not_loaded(path)?;
-    let json = serde_json::to_vec_pretty(settings)
+    let mut settings = settings.clone();
+    settings.top_offset = settings.top_offset.clamp(0, 200);
+    let json = serde_json::to_vec_pretty(&settings)
         .map_err(|e| std::io::Error::new(ErrorKind::InvalidData, e))?;
 
     // A dotfiles setup can make settings.json a symlink: write to the file it
@@ -452,7 +461,8 @@ mod tests {
   "phoneServices": ["integration_stripe"],
   "phoneRelay": true,
   "phoneRelayUrl": "wss://relay.example.workers.dev",
-  "showClock": true
+  "showClock": true,
+  "topOffset": 48
 }"##;
 
     fn custom() -> Value {
@@ -532,6 +542,35 @@ mod tests {
     fn unknown_fields_are_ignored_and_the_known_ones_kept() {
         let bytes = custom_with("somethingFromALaterVersion", Some(json!({ "a": [1, 2] })));
         assert_eq!(shown(&parse(&bytes).unwrap()), custom());
+    }
+
+    #[test]
+    fn a_file_from_before_top_offset_gets_the_default() {
+        let loaded = parse(&custom_with("topOffset", None)).unwrap();
+        let expected = crate::platform::default_top_offset(
+            &std::env::var("XDG_CURRENT_DESKTOP").unwrap_or_default(),
+        );
+        assert_eq!(loaded.top_offset, expected);
+    }
+
+    #[test]
+    fn top_offset_clamps_on_load_and_save() {
+        let neg = parse(&custom_with("topOffset", Some(json!(-50)))).unwrap();
+        assert_eq!(neg.top_offset, 0);
+
+        let huge = parse(&custom_with("topOffset", Some(json!(999)))).unwrap();
+        assert_eq!(huge.top_offset, 200);
+
+        let (dir, file) = scratch("clamp-save");
+        let mut s = Settings::default();
+        s.top_offset = -10;
+        save_to(&file, &s).unwrap();
+        assert_eq!(parse(&std::fs::read(&file).unwrap()).unwrap().top_offset, 0);
+
+        s.top_offset = 300;
+        save_to(&file, &s).unwrap();
+        assert_eq!(parse(&std::fs::read(&file).unwrap()).unwrap().top_offset, 200);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -961,6 +1000,7 @@ mod tests {
                 "phoneRelay",
                 "phoneRelayUrl",
                 "showClock",
+                "topOffset",
             ]
         );
         let _ = std::fs::remove_dir_all(&dir);

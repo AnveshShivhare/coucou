@@ -133,6 +133,15 @@ fn is_gnome(desktop: &str) -> bool {
     desktop.split(':').any(|d| d.eq_ignore_ascii_case("gnome"))
 }
 
+/// Default top offset in logical pixels: 32 on GNOME (standard shell panel height), 0 elsewhere.
+pub fn default_top_offset(desktop: &str) -> i32 {
+    if desktop.to_ascii_lowercase().contains("gnome") {
+        32
+    } else {
+        0
+    }
+}
+
 /// GNOME's "Large text" (text-scaling-factor > 1) makes WebKitGTK draw every
 /// font larger inside a window sized in fixed pixels, so the island's content
 /// was cut off (#122). The island's layout is its own, so it asks GDK to undo
@@ -796,6 +805,18 @@ mod tests {
         assert!(!is_private_dir(&base.join("missing")));
 
         let _ = std::fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn default_top_offset_depends_on_desktop() {
+        assert_eq!(default_top_offset("ubuntu:GNOME"), 32);
+        assert_eq!(default_top_offset("GNOME"), 32);
+        assert_eq!(default_top_offset("gnome"), 32);
+        assert_eq!(default_top_offset("GNOME:GNOME-Classic"), 32);
+        assert_eq!(default_top_offset("KDE"), 0);
+        assert_eq!(default_top_offset("cosmic"), 0);
+        assert_eq!(default_top_offset("sway"), 0);
+        assert_eq!(default_top_offset(""), 0);
     }
 
     #[test]
